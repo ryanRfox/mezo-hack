@@ -107,7 +107,7 @@ Pacing risk. Webinars without audience cues feel longer for the speaker. **Use t
 | Asset | Location | Use |
 |-------|----------|-----|
 | Working merchant (humor server, 292 lines) | `server/humor-server.ts` | Source for the minimal starter |
-| Working facilitator fleet | `https://facilitator.test.mezo.org` (3 VMs) | Live demo backend |
+| Working facilitator fleet | `https://facilitator.vativ.io` (3 VMs) | Live demo backend |
 | Working SPA (v0.9.5) | `https://humor-usw3.vativ.io` | Live demo target |
 | Competitive analysis | `docs/x402-devrel-competitive-analysis.md` | Source for "where x402 is in the ecosystem" slide if needed |
 | Algorand devrel concepts | (in competitive analysis) | Source for slide structure principles (Diátaxis, 20-min win) |
@@ -138,7 +138,7 @@ The starter is the centerpiece. It MUST be:
 - **One paywalled route** (`GET /joke`) — returns a JSON object
 - **No SPA** — `curl` it, that's the demo
 - **No /add, no moderation, no admin, no /health, no /info, no compression**
-- **Hardcoded facilitator URL** (`https://facilitator.test.mezo.org`)
+- **Hardcoded facilitator URL** (`https://facilitator.vativ.io`)
 - **Hardcoded mUSD address and Permit2 `extra` block** (the protocol minimum)
 - **`.env.example`** with only 3 vars: `PAYEE_ADDRESS`, `PORT`, optional `FACILITATOR_URL`
 - **`package.json`** with the minimum deps: `@x402/express`, `@x402/evm`, `@x402/core`, `express`, `dotenv`, `tsx`, `typescript`

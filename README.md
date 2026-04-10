@@ -24,7 +24,7 @@ pnpm dev
 curl http://localhost:3000/joke  # → 402 Payment Required
 ```
 
-The starter is ~50 lines of TypeScript using `@x402/express`. It runs against the Mezo Testnet facilitator at `https://facilitator.test.mezo.org`. You don't need to run a facilitator — we provide one.
+The starter is ~50 lines of TypeScript using `@x402/express`. It runs against the Mezo Testnet facilitator at `https://facilitator.vativ.io`. You don't need to run a facilitator — we provide one.
 
 ## Webinar materials
 

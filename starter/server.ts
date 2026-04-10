@@ -16,7 +16,7 @@ if (!PAYEE_ADDRESS) {
 }
 
 const PORT = parseInt(process.env.PORT || "3000");
-const FACILITATOR_URL = process.env.FACILITATOR_URL || "https://facilitator.test.mezo.org";
+const FACILITATOR_URL = process.env.FACILITATOR_URL || "https://facilitator.vativ.io";
 const MUSD_ADDRESS = "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503";
 const JOKES_PATH = join(dirname(fileURLToPath(import.meta.url)), "jokes.json");
 

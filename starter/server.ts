@@ -56,6 +56,15 @@ app.use(
   ),
 );
 
+app.get("/", (_req, res) => {
+  res.type("text/plain").send(
+    `Mezo x402 starter is running.\n\n` +
+      `This demo is curl-only. Try:\n` +
+      `  curl -i http://localhost:${PORT}/joke\n\n` +
+      `For the browser wallet flow, see https://humor-usw3.vativ.io\n`,
+  );
+});
+
 app.get("/joke", async (_req, res) => {
   const jokes = JSON.parse(await readFile(JOKES_PATH, "utf-8"));
   res.json(jokes[Math.floor(Math.random() * jokes.length)]);

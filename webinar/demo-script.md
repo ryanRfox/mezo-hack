@@ -37,17 +37,34 @@ end-to-end in under 30 seconds of real time.
 curl -i https://humor-usw3.vativ.io/joke
 ```
 
-**What the audience sees:** HTTP/1.1 402 Payment Required, then the JSON
-body with `accepts`, `scheme: exact`, `asset: 0x118917...` (mUSD),
-`maxAmountRequired: 10000000000000000` (0.01 mUSD), `payTo: 0x...`, the
-Permit2 extra block.
+**What the audience sees:** `HTTP/1.1 402 Payment Required`, an empty `{}`
+body, and a long base64 `PAYMENT-REQUIRED` header. The payment envelope
+lives in that header (x402 protocol v2 — moved out of the body so clients
+can detect the paywall from headers alone).
+
+**Optional pre-pasted follow-up** (show the decoded header if the audience
+looks lost):
+
+```bash
+curl -s -i https://humor-usw3.vativ.io/joke \
+  | awk '/^PAYMENT-REQUIRED:/ { print $2 }' \
+  | tr -d '\r' | base64 -d | jq .
+```
+
+This reveals `x402Version: 2`, `accepts` array with `scheme: exact`, `asset:
+0x118917...` (mUSD), `amount: "1000000000000000"` (= 0.001 mUSD, 18 decimals),
+`payTo: 0x...`, and the Permit2 `extra` block.
 
 > **Narration points:**
 > - "402 Payment Required — this status code has existed since 1996. Nobody
 >   used it. We're using it."
-> - "The server is telling me exactly what it wants: 0.01 mUSD on Mezo
+> - "The JSON body is empty. The payment info is in a header called
+>   `PAYMENT-REQUIRED`. That's x402 protocol version 2 — headers-first so
+>   any HTTP client can detect the paywall without parsing the body."
+> - "The server is telling me exactly what it wants: 0.001 mUSD on Mezo
 >   Testnet, paid to this address."
-> - "There's no session. There's no account. Just HTTP and a number."
+> - "There's no session. There's no account. Just HTTP, a header, and a
+>   number."
 
 ### Beat 2 — "Now let me pay it" (slide 8, 2:00–4:00)
 
@@ -66,24 +83,24 @@ Permit2 extra block.
 - Select the demo account
 
 **What the audience sees:** Page updates to show the wallet address, the
-price (0.01 mUSD), and a "Pay and unlock" button.
+price (0.001 mUSD), and a "Unlock the Punchline" button.
 
 ### Beat 3 — "Sign the Permit2 authorization" (slide 9, 4:00–7:00)
 
-**Action:** Click **Pay and unlock**.
+**Action:** Click **Unlock the Punchline**.
 
 **What the audience sees:** Wallet popup appears asking to sign a typed-data
 message (Permit2 authorization). The popup shows:
 - `Permit2.SignatureTransfer`
 - Token: `Mezo USD`
-- Amount: `0.01`
+- Amount: `0.001`
 - Spender: the facilitator's Permit2 executor address
 - Deadline: ~5 minutes out
 
 > **Narration points:**
 > - "This is a signature, not a transaction. No gas yet. The wallet is
 >   signing a Permit2 authorization that says 'I allow this spender to move
->   0.01 mUSD from my account.'"
+>   0.001 mUSD from my account.'"
 > - "Permit2 is how we avoid the two-step 'approve then transfer' dance that
 >   usually makes ERC-20 payments feel clunky."
 

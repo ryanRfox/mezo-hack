@@ -50,21 +50,47 @@ Without payment:
 curl -i http://localhost:3000/joke
 ```
 
-Expected response — HTTP **402 Payment Required** with a JSON body describing
-what to pay, to whom, and how:
+Expected response — HTTP **402 Payment Required**. The body is empty `{}` and
+the payment details are in the `PAYMENT-REQUIRED` header (base64-encoded):
 
 ```http
 HTTP/1.1 402 Payment Required
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
+PAYMENT-REQUIRED: eyJ4NDAyVmVyc2lvbiI6MiwiZXJyb3IiOiJQYXltZW50IHJlcXVpcmVkIi...
 
+{}
+```
+
+x402 protocol v2 moved the payment envelope from the JSON body into an HTTP
+header so clients can detect the paywall without parsing the body. Decode the
+header to see what the server wants:
+
+```bash
+curl -s -i http://localhost:3000/joke \
+  | awk '/^PAYMENT-REQUIRED:/ { print $2 }' \
+  | tr -d '\r' \
+  | base64 -d \
+  | jq .
+```
+
+You'll see something like:
+
+```json
 {
-  "x402Version": 1,
+  "x402Version": 2,
+  "error": "Payment required",
+  "resource": {
+    "url": "http://localhost:3000/joke",
+    "description": "Unlock a Bitcoin joke",
+    "mimeType": "application/json"
+  },
   "accepts": [{
     "scheme": "exact",
     "network": "eip155:31611",
-    "payTo": "0xYour...",
-    "maxAmountRequired": "1000000000000000",
+    "amount": "1000000000000000",
     "asset": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
+    "payTo": "0xYour...",
+    "maxTimeoutSeconds": 300,
     "extra": {
       "name": "Mezo USD",
       "version": "1",
@@ -80,11 +106,14 @@ Mezo Testnet, settled via Permit2.
 
 ## Pay for it
 
-Any x402 client will read the 402 body, sign a Permit2 authorization with your
-wallet, and retry the request. The easiest way to try it without writing a
-client: use our hosted paywall demo at **[humor-usw3.vativ.io](https://humor-usw3.vativ.io)** — it runs the same starter pattern with a browser-based wallet flow.
+Any x402 client will read the `PAYMENT-REQUIRED` header, sign a Permit2
+authorization with your wallet, and retry the request with an `X-PAYMENT`
+header. The easiest way to try the full paid flow without writing a client:
+use our hosted paywall demo at **[humor-usw3.vativ.io](https://humor-usw3.vativ.io)** —
+it runs the same starter pattern with a browser-based wallet flow.
 
-On a successful payment you get a **200 OK** with the joke:
+On a successful payment you get a **200 OK** with the joke, plus a
+`PAYMENT-RESPONSE` header (also base64) containing the settlement tx hash:
 
 ```json
 {
@@ -93,9 +122,9 @@ On a successful payment you get a **200 OK** with the joke:
 }
 ```
 
-And the settlement transaction shows up on
-[Mezo Testnet Explorer](https://explorer.test.mezo.org) — that's your 0.001
-mUSD moving from the buyer to your `PAYEE_ADDRESS`.
+The settlement transaction shows up on
+[Mezo Testnet Explorer](https://explorer.test.mezo.org) — that's 0.001 mUSD
+moving from the buyer to your `PAYEE_ADDRESS`, with the facilitator paying gas.
 
 ## Change the joke
 

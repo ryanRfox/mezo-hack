@@ -86,15 +86,16 @@ don't have to."
 *(Walk through the diagram step-by-step. Use the numbered callouts.)*
 
 "One: the client hits your endpoint. Two: your server returns a 402 with a
-little JSON blob that says 'this costs 0.001 mUSD on Mezo, pay it to this
-address.' Three and four: the client's wallet signs a Permit2 authorization
-— that's a gasless signature, not a transaction. Five: the client retries
-the same endpoint, this time with the signed authorization in an
-`X-PAYMENT` header. Six: your server calls the facilitator to verify the
-signature. Seven: your server calls the facilitator to settle — the
-facilitator executes the Permit2 transfer on-chain. Eight: you return 200
-OK with the content plus an `X-PAYMENT-RESPONSE` header containing the
-transaction hash."
+`PAYMENT-REQUIRED` header that says 'this costs 0.001 mUSD on Mezo, pay it
+to this address.' The body is empty — in x402 version 2 the envelope lives
+in the header so clients can detect paywalls without parsing JSON. Three
+and four: the client's wallet signs a Permit2 authorization — that's a
+gasless signature, not a transaction. Five: the client retries the same
+endpoint, this time with the signed authorization in an `X-PAYMENT` header.
+Six: your server calls the facilitator to verify the signature. Seven:
+your server calls the facilitator to settle — the facilitator executes the
+Permit2 transfer on-chain. Eight: you return 200 OK with the content plus
+a `PAYMENT-RESPONSE` header containing the transaction hash."
 
 "Here's the key insight: you — the merchant — only handle HTTP. You never
 touch a wallet library. You never submit a transaction. You never hold
@@ -130,7 +131,7 @@ you're settling real on-chain x402 payments in ten minutes."
 display.
 
 **Say:** "I'm going to show you the humor server — a tiny paywalled API
-that tells Bitcoin jokes for 0.01 mUSD each. It's deployed and live right
+that tells Bitcoin jokes for 0.001 mUSD each. It's deployed and live right
 now at humor-usw3-dot-vativ-dot-io. Same code as the starter in the repo.
 Same facilitator you'll use."
 

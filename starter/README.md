@@ -94,6 +94,7 @@ You'll see something like:
     "extra": {
       "name": "Mezo USD",
       "version": "1",
+      "decimals": 18,
       "assetTransferMethod": "permit2",
       "supportsEip2612": true
     }

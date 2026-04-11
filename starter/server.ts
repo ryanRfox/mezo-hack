@@ -1,25 +1,25 @@
 import { paymentMiddleware, x402ResourceServer } from "@x402/express";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { HTTPFacilitatorClient } from "@x402/core/server";
-import dotenv from "dotenv";
+import { config } from "dotenv";
 import express from "express";
-import { readFile } from "fs/promises";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
-dotenv.config();
+config();
 
 const PAYEE_ADDRESS = process.env.PAYEE_ADDRESS as `0x${string}`;
 if (!PAYEE_ADDRESS) {
-  console.error("PAYEE_ADDRESS is required. Copy .env.example to .env.");
+  console.error("PAYEE_ADDRESS is required. Copy .env.example to .env and fill it in.");
   process.exit(1);
 }
 
-const PORT = parseInt(process.env.PORT || "3000");
-const FACILITATOR_URL = process.env.FACILITATOR_URL || "https://facilitator.vativ.io";
+const PORT = Number(process.env.PORT ?? 3000);
+const FACILITATOR_URL = process.env.FACILITATOR_URL ?? "https://facilitator.vativ.io";
 const MUSD_ADDRESS = "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503";
-const JOKES_PATH = join(dirname(fileURLToPath(import.meta.url)), "jokes.json");
+const JOKES_PATH = join(import.meta.dirname, "jokes.json");
 
+const facilitatorClient = new HTTPFacilitatorClient({ url: FACILITATOR_URL });
 const app = express();
 
 app.use(
@@ -31,7 +31,7 @@ app.use(
           network: "eip155:31611",
           payTo: PAYEE_ADDRESS,
           price: {
-            amount: "1000000000000000",
+            amount: "1000000000000000", // 0.001 mUSD (18 decimals)
             asset: MUSD_ADDRESS,
             extra: {
               name: "Mezo USD",
@@ -46,9 +46,7 @@ app.use(
         mimeType: "application/json",
       },
     },
-    new x402ResourceServer(
-      new HTTPFacilitatorClient({ url: FACILITATOR_URL }),
-    ).register("eip155:*", new ExactEvmScheme()),
+    new x402ResourceServer(facilitatorClient).register("eip155:*", new ExactEvmScheme()),
   ),
 );
 

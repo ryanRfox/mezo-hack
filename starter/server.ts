@@ -16,6 +16,11 @@ if (!PAYEE_ADDRESS) {
 
 const PORT = Number(process.env.PORT ?? 3000);
 const FACILITATOR_URL = process.env.FACILITATOR_URL ?? "https://facilitator.vativ.io";
+// SHIM: Mezo Testnet (eip155:31611) is not in @x402/evm@2.9.0's DEFAULT_STABLECOINS
+// registry. Restored upstream in x402-foundation/x402 PR #1920 but not yet published.
+// When @x402/evm >= 2.10.0 ships, drop this constant — ExactEvmScheme will resolve
+// mUSD from the registry automatically and new x402ResourceServer(...) will register
+// it via `register("eip155:*", new ExactEvmScheme())` without a hardcoded address.
 const MUSD_ADDRESS = "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503";
 const JOKES_PATH = join(import.meta.dirname, "jokes.json");
 
@@ -36,6 +41,7 @@ app.use(
             extra: {
               name: "Mezo USD",
               version: "1",
+              decimals: 18,
               assetTransferMethod: "permit2",
               supportsEip2612: true,
             },

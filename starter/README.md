@@ -39,7 +39,7 @@ pnpm dev
 The server starts on `http://localhost:3000`. You'll see:
 
 ```
-Mezo x402 starter on :3000 — GET /joke (0.001 mUSD → 0xYour…)
+Mezo x402 starter on http://localhost:3000 — GET /joke (0.001 mUSD → 0xYour…)
 ```
 
 ## Hit it with curl

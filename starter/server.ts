@@ -62,5 +62,5 @@ app.get("/joke", async (_req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Mezo x402 starter on :${PORT} — GET /joke (0.001 mUSD → ${PAYEE_ADDRESS})`);
+  console.log(`Mezo x402 starter on http://localhost:${PORT} — GET /joke (0.001 mUSD → ${PAYEE_ADDRESS})`);
 });

@@ -8,9 +8,10 @@
     "start": "tsx server.ts"
   },
   "dependencies": {
-    "@x402/core": "^2.9.0",
-    "@x402/evm": "^2.9.0",
-    "@x402/express": "^2.9.0",
+    "@x402/core": "file:/Users/fox/gt/.cache/x402-tarballs/x402-core-2.9.0.tgz",
+    "@x402/evm": "file:/Users/fox/gt/.cache/x402-tarballs/x402-evm-2.9.0.tgz",
+    "@x402/express": "file:/Users/fox/gt/.cache/x402-tarballs/x402-express-2.9.0.tgz",
+    "@x402/paywall": "file:/Users/fox/gt/.cache/x402-tarballs/x402-paywall-2.9.0.tgz",
     "dotenv": "^16.6.1",
     "express": "^4.21.2"
   },

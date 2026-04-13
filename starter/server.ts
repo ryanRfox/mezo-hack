@@ -1,10 +1,10 @@
+import express from "express";
 import { paymentMiddleware, x402ResourceServer } from "@x402/express";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import { createPaywall } from "@x402/paywall";
 import { evmPaywall } from "@x402/paywall/evm";
 import { config } from "dotenv";
-import express from "express";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -21,6 +21,7 @@ const FACILITATOR_URL = process.env.FACILITATOR_URL ?? "https://facilitator.vati
 const JOKES_PATH = join(import.meta.dirname, "jokes.json");
 
 const facilitatorClient = new HTTPFacilitatorClient({ url: FACILITATOR_URL });
+const scheme = new ExactEvmScheme();
 const paywall = createPaywall()
   .withNetwork(evmPaywall)
   .withConfig({ appName: "Mezo x402 Starter", testnet: true })
@@ -42,7 +43,7 @@ app.use(
         mimeType: "application/json",
       },
     },
-    new x402ResourceServer(facilitatorClient).register("eip155:*", new ExactEvmScheme()),
+    new x402ResourceServer(facilitatorClient).register("eip155:*", scheme),
     undefined,
     paywall,
   ),

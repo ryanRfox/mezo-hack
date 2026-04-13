@@ -31,6 +31,8 @@ cp .env.example .env
 # Edit .env and set PAYEE_ADDRESS to your wallet address
 ```
 
+---
+
 ## Step 1: The free joke API
 
 ```bash
@@ -38,18 +40,23 @@ pnpm dev
 ```
 
 This runs `1-server.ts` — a vanilla Express server with one endpoint.
-No x402, no paywall, no payment.
+No x402, no paywall, no payment libraries.
 
 ```bash
-curl http://localhost:3000/free
+curl -i http://localhost:3000/free
 ```
 
-```json
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+
 {"setup":"Why do bitcoiners never get cold?","punchline":"Because they have plenty of hash power!"}
 ```
 
-Open `http://localhost:3000` in your browser to see the landing page.
-Kill the server with `Ctrl+C` when you're ready for step 2.
+Standard HTTP 200. Open `http://localhost:3000` in your browser to see
+the landing page. Kill the server with `Ctrl+C` when ready for step 2.
+
+---
 
 ## Step 2: Add the x402 paywall
 
@@ -60,36 +67,33 @@ pnpm x402
 This runs `2-server.ts` — the same server with a new `/paid` endpoint
 wrapped in the x402 paywall. The `/free` endpoint is unchanged.
 
-**Try the free endpoint** (still works, no payment):
+### The free endpoint still works
 
 ```bash
-curl http://localhost:3000/free
+curl -i http://localhost:3000/free
 ```
 
-**Try the paid endpoint** (returns 402):
+Same 200 as before. No payment, no headers, just the joke.
+
+### The paid endpoint returns 402
 
 ```bash
 curl -i http://localhost:3000/paid
 ```
 
-You'll see HTTP **402 Payment Required** with an empty body and a
-`PAYMENT-REQUIRED` header containing the payment requirements (base64):
-
 ```http
 HTTP/1.1 402 Payment Required
+Content-Type: application/json; charset=utf-8
 PAYMENT-REQUIRED: eyJ4NDAyVmVyc2lvbiI6Mi...
 
 {}
 ```
 
-Decode the header to see what the server wants:
+The body is empty. The payment requirements are in the `PAYMENT-REQUIRED`
+header, base64-encoded. Decode it:
 
 ```bash
-curl -s -i http://localhost:3000/paid \
-  | awk '/^PAYMENT-REQUIRED:/ { print $2 }' \
-  | tr -d '\r' \
-  | base64 -d \
-  | jq .
+echo "PASTE_THE_HEADER_VALUE" | base64 -D | jq .
 ```
 
 ```json
@@ -117,16 +121,35 @@ curl -s -i http://localhost:3000/paid \
 }
 ```
 
-That's a request for **$0.001 in mUSD** on Mezo Testnet, settled via
-Permit2. The SDK resolved the dollar price to the correct 18-decimal
+The server is asking for **$0.001 in mUSD** on Mezo Testnet, settled
+via Permit2. The SDK resolved the dollar price to the correct 18-decimal
 mUSD amount automatically.
 
-## Pay in the browser
+### Pay in the browser
 
-Open `http://localhost:3000/paid` in Chrome with MetaMask. The x402
-paywall UI appears — connect your wallet, approve the Permit2 signature,
-and the joke + transaction hash are displayed. The settlement is visible
-on [Mezo Testnet Explorer](https://explorer.test.mezo.org).
+Open `http://localhost:3000/paid` in Chrome with MetaMask. The paywall
+UI detects the browser and shows a wallet-connect flow instead of the
+raw 402:
+
+1. Connect your wallet
+2. Approve the Permit2 signature
+3. The joke and transaction hash appear
+
+The settlement is visible on
+[Mezo Testnet Explorer](https://explorer.test.mezo.org).
+
+### How the middleware routes requests
+
+```
+Browser (Accept: text/html)  →  402 + paywall HTML (2MB interactive UI)
+curl / API (Accept: */*)     →  402 + {} body + PAYMENT-REQUIRED header
+```
+
+The middleware checks `Accept` and `User-Agent` to decide which response
+to send. Both return 402 — the difference is how the payment requirements
+are delivered.
+
+---
 
 ## What changed between step 1 and step 2
 
@@ -140,6 +163,8 @@ Compare `1-server.ts` and `2-server.ts`. The differences:
 The `/free` handler is copy-pasted unchanged. The paywall middleware only
 affects routes declared in the config (`GET /paid`). Everything else
 passes through.
+
+---
 
 ## Change the price
 
@@ -170,8 +195,7 @@ a wallet address you control.
 facilitator at `https://facilitator.vativ.io`. Check your network.
 
 **402 in the browser but no paywall UI** — Make sure you're running
-`pnpm x402` (step 2), not `pnpm dev` (step 1). The paywall UI only
-appears on `/paid`.
+`pnpm x402` (step 2), not `pnpm dev` (step 1).
 
 **"Insufficient mUSD"** — Top up from
 [faucet.mezo.org](https://faucet.mezo.org).

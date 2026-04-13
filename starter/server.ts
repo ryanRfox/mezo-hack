@@ -231,12 +231,23 @@ async function payForJoke() {
     var payFetch = fetchMod.wrapFetchWithPayment(fetch.bind(window), client);
 
     setStatus("Signing payment (check MetaMask)...");
+    console.log("[x402-modal] Starting paid fetch to /joke...");
     var response = await payFetch(location.origin + "/joke", {
       headers: { "Accept": "application/json" }
     });
 
+    console.log("[x402-modal] Response status:", response.status);
+    console.log("[x402-modal] Response headers:", {
+      paymentResponse: response.headers.get("PAYMENT-RESPONSE"),
+      paymentRequired: response.headers.get("PAYMENT-REQUIRED"),
+      contentType: response.headers.get("content-type")
+    });
+
     if (!response.ok) {
-      throw new Error("Payment failed: " + response.status);
+      var errBody = "";
+      try { errBody = await response.text(); } catch(e2) {}
+      console.error("[x402-modal] Payment rejected. Body:", errBody);
+      throw new Error("Payment failed: " + response.status + (errBody ? " — " + errBody.slice(0, 200) : ""));
     }
 
     var joke = await response.json();

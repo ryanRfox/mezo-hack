@@ -1,11 +1,8 @@
 # Mezo x402 Starter
 
-A minimal paywalled API on Mezo Testnet. One route. ~50 lines of TypeScript.
-Clone, change the jokes, ship.
-
-```
-GET /joke  →  402 Payment Required  →  sign with mUSD  →  200 OK + joke
-```
+A two-step demo showing how to add an x402 paywall to an existing Express
+API. Start with a free joke endpoint, then add a paid version using the
+x402 SDK.
 
 ## Prerequisites
 
@@ -24,63 +21,83 @@ GET /joke  →  402 Payment Required  →  sign with mUSD  →  200 OK + joke
 2. Visit [faucet.mezo.org](https://faucet.mezo.org) and request testnet mUSD.
 3. You'll also need a tiny bit of testnet BTC for gas — the faucet gives both.
 
-## Install and run
+## Install
 
 ```bash
 git clone https://github.com/ryanRfox/mezo-hack.git
 cd mezo-hack/starter
-
 pnpm install
 cp .env.example .env
 # Edit .env and set PAYEE_ADDRESS to your wallet address
+```
+
+## Step 1: The free joke API
+
+```bash
 pnpm dev
 ```
 
-The server starts on `http://localhost:3000`. You'll see:
-
-```
-Mezo x402 starter on http://localhost:3000 — GET /joke (0.001 mUSD → 0xYour…)
-```
-
-## Hit it with curl
-
-Without payment:
+This runs `1-server.ts` — a vanilla Express server with one endpoint.
+No x402, no paywall, no payment.
 
 ```bash
-curl -i http://localhost:3000/joke
+curl http://localhost:3000/free
 ```
 
-Expected response — HTTP **402 Payment Required**. The body is empty `{}` and
-the payment details are in the `PAYMENT-REQUIRED` header (base64-encoded):
+```json
+{"setup":"Why do bitcoiners never get cold?","punchline":"Because they have plenty of hash power!"}
+```
+
+Open `http://localhost:3000` in your browser to see the landing page.
+Kill the server with `Ctrl+C` when you're ready for step 2.
+
+## Step 2: Add the x402 paywall
+
+```bash
+pnpm x402
+```
+
+This runs `2-server.ts` — the same server with a new `/paid` endpoint
+wrapped in the x402 paywall. The `/free` endpoint is unchanged.
+
+**Try the free endpoint** (still works, no payment):
+
+```bash
+curl http://localhost:3000/free
+```
+
+**Try the paid endpoint** (returns 402):
+
+```bash
+curl -i http://localhost:3000/paid
+```
+
+You'll see HTTP **402 Payment Required** with an empty body and a
+`PAYMENT-REQUIRED` header containing the payment requirements (base64):
 
 ```http
 HTTP/1.1 402 Payment Required
-Content-Type: application/json; charset=utf-8
-PAYMENT-REQUIRED: eyJ4NDAyVmVyc2lvbiI6MiwiZXJyb3IiOiJQYXltZW50IHJlcXVpcmVkIi...
+PAYMENT-REQUIRED: eyJ4NDAyVmVyc2lvbiI6Mi...
 
 {}
 ```
 
-x402 protocol v2 moved the payment envelope from the JSON body into an HTTP
-header so clients can detect the paywall without parsing the body. Decode the
-header to see what the server wants:
+Decode the header to see what the server wants:
 
 ```bash
-curl -s -i http://localhost:3000/joke \
+curl -s -i http://localhost:3000/paid \
   | awk '/^PAYMENT-REQUIRED:/ { print $2 }' \
   | tr -d '\r' \
   | base64 -d \
   | jq .
 ```
 
-You'll see something like:
-
 ```json
 {
   "x402Version": 2,
   "error": "Payment required",
   "resource": {
-    "url": "http://localhost:3000/joke",
+    "url": "http://localhost:3000/paid",
     "description": "Unlock a Bitcoin joke",
     "mimeType": "application/json"
   },
@@ -94,77 +111,70 @@ You'll see something like:
     "extra": {
       "name": "Mezo USD",
       "version": "1",
-      "decimals": 18,
-      "assetTransferMethod": "permit2",
-      "supportsEip2612": true
+      "assetTransferMethod": "permit2"
     }
   }]
 }
 ```
 
-That's a request for **0.001 mUSD** (1×10¹⁵ wei — mUSD has 18 decimals) on
-Mezo Testnet, settled via Permit2.
+That's a request for **$0.001 in mUSD** on Mezo Testnet, settled via
+Permit2. The SDK resolved the dollar price to the correct 18-decimal
+mUSD amount automatically.
 
-## Pay for it
+## Pay in the browser
 
-Any x402 client will read the `PAYMENT-REQUIRED` header, sign a Permit2
-authorization with your wallet, and retry the request with an `X-PAYMENT`
-header. The easiest way to try the full paid flow without writing a client:
-use our hosted paywall demo at **[humor-usw3.vativ.io](https://humor-usw3.vativ.io)** —
-it runs the same starter pattern with a browser-based wallet flow.
+Open `http://localhost:3000/paid` in Chrome with MetaMask. The x402
+paywall UI appears — connect your wallet, approve the Permit2 signature,
+and the joke + transaction hash are displayed. The settlement is visible
+on [Mezo Testnet Explorer](https://explorer.test.mezo.org).
 
-On a successful payment you get a **200 OK** with the joke, plus a
-`PAYMENT-RESPONSE` header (also base64) containing the settlement tx hash:
+## What changed between step 1 and step 2
 
-```json
-{
-  "setup": "Why don't Bitcoin holders ever lose at poker?",
-  "punchline": "They never fold."
-}
-```
+Compare `1-server.ts` and `2-server.ts`. The differences:
 
-The settlement transaction shows up on
-[Mezo Testnet Explorer](https://explorer.test.mezo.org) — that's 0.001 mUSD
-moving from the buyer to your `PAYEE_ADDRESS`, with the facilitator paying gas.
+1. **Imports** — `@x402/express`, `@x402/evm`, `@x402/core`, `@x402/paywall`
+2. **Setup** — facilitator client, EVM scheme, paywall builder (~5 lines)
+3. **Middleware** — `app.use(paymentMiddleware(...))` with one route config
+4. **New handler** — `app.get("/paid", ...)` — same logic as `/free`
 
-## Change the joke
-
-Open `jokes.json` and replace the entries. Restart `pnpm dev` and curl again.
-That's the whole modification loop.
+The `/free` handler is copy-pasted unchanged. The paywall middleware only
+affects routes declared in the config (`GET /paid`). Everything else
+passes through.
 
 ## Change the price
 
-In `server.ts`, update the `price.amount` field. Values are in wei (mUSD has
-18 decimals):
+In `2-server.ts`, update the `price` field:
 
-| Amount | Value |
-|---|---|
-| 0.0001 mUSD | `"100000000000000"` |
-| 0.001 mUSD  | `"1000000000000000"` |
-| 0.01 mUSD   | `"10000000000000000"` |
-| 0.1 mUSD    | `"100000000000000000"` |
-| 1 mUSD      | `"1000000000000000000"` |
+```typescript
+price: "$0.001",   // one-tenth of a cent
+price: "$0.01",    // one cent
+price: "$0.10",    // ten cents
+price: "$1.00",    // one dollar
+```
+
+The SDK converts dollar amounts to the correct mUSD atomic units
+automatically (18 decimals).
 
 ## Change the route
 
-Replace `/joke` with whatever resource you're actually monetizing — a chat
-completion, a data API, a rendered image. The `paymentMiddleware` config maps
-HTTP routes to payment requirements; the route handler runs only after
-settlement succeeds.
+Replace `/paid` with your own endpoint. The `paymentMiddleware` config
+maps HTTP routes to payment requirements — declare which routes cost
+money and how much. The route handler only runs after payment settles.
 
 ## Troubleshooting
 
-**`PAYEE_ADDRESS is required`** — You skipped editing `.env`. Set
-`PAYEE_ADDRESS` to a wallet address you control.
+**`PAYEE_ADDRESS is required`** — Edit `.env` and set `PAYEE_ADDRESS` to
+a wallet address you control.
 
-**`ECONNREFUSED` when the server starts** — The starter connects to our hosted
-facilitator at `https://facilitator.vativ.io`. If it's unreachable, check your
-network or see [status page](https://github.com/ryanRfox/mezo-hack/issues).
+**`ECONNREFUSED` on startup** — The server connects to the hosted
+facilitator at `https://facilitator.vativ.io`. Check your network.
 
-**Client says "insufficient mUSD"** — Top up from [faucet.mezo.org](https://faucet.mezo.org). The faucet refills frequently.
+**402 in the browser but no paywall UI** — Make sure you're running
+`pnpm x402` (step 2), not `pnpm dev` (step 1). The paywall UI only
+appears on `/paid`.
 
-**Client settles but the joke endpoint 500s** — Check `jokes.json` is valid
-JSON. The route handler reads it on every request.
+**"Insufficient mUSD"** — Top up from
+[faucet.mezo.org](https://faucet.mezo.org).
 
 ## What's next
 

@@ -51,6 +51,14 @@ if (count === 0) {
   process.exit(1);
 }
 
+// Fix 2: Convert classic <script> tags to <script type="module"> inside the
+// template string. MetaMask SES lockdown intercepts classic script parsing
+// and chokes on ?? (nullish coalescing). Module scripts bypass SES.
+const scriptTag = "<" + "script>";
+const moduleTag = "<" + `script type="module">`;
+const scriptFix = src.split(scriptTag).length - 1;
+src = src.split(scriptTag).join(moduleTag);
+
 fs.writeFileSync(f, src);
-console.log("patch-paywall: patched " + count + " chain lookup(s), skipped 1 wagmi site (SES compat)");
+console.log("patch-paywall: patched " + count + " chain lookup(s), " + scriptFix + " script tag(s) → module");
 ' "$PAYWALL_EVM"

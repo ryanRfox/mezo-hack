@@ -230,6 +230,26 @@ async function payForJoke() {
     client.register("eip155:*", new evmClientMod.ExactEvmScheme(signer));
     var payFetch = fetchMod.wrapFetchWithPayment(fetch.bind(window), client);
 
+    setStatus("Checking requirements...");
+
+    // Debug: manually fetch to verify we can read the PAYMENT-REQUIRED header
+    var debugRes = await fetch(location.origin + "/joke", { headers: { "Accept": "application/json" } });
+    var prHeader = debugRes.headers.get("PAYMENT-REQUIRED");
+    console.log("[x402-modal] Debug: manual fetch status =", debugRes.status);
+    console.log("[x402-modal] Debug: PAYMENT-REQUIRED header readable =", prHeader !== null);
+    console.log("[x402-modal] Debug: PAYMENT-REQUIRED length =", prHeader ? prHeader.length : 0);
+    if (prHeader) {
+      try {
+        var decoded = JSON.parse(atob(prHeader));
+        console.log("[x402-modal] Debug: decoded requirements =", JSON.stringify(decoded).slice(0, 200));
+      } catch(e) { console.log("[x402-modal] Debug: decode failed:", e.message); }
+    }
+
+    console.log("[x402-modal] Debug: x402Client =", typeof fetchMod.x402Client);
+    console.log("[x402-modal] Debug: ExactEvmScheme =", typeof evmClientMod.ExactEvmScheme);
+    console.log("[x402-modal] Debug: wrapFetchWithPayment =", typeof fetchMod.wrapFetchWithPayment);
+    console.log("[x402-modal] Debug: signer address =", account);
+
     setStatus("Signing payment (check MetaMask)...");
     console.log("[x402-modal] Starting paid fetch to /joke...");
     var response = await payFetch(location.origin + "/joke", {

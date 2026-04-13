@@ -4,8 +4,9 @@
   "description": "Minimal x402 paywalled API on Mezo Testnet (mUSD) with browser payment modal.",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch server.ts",
-    "start": "tsx server.ts"
+    "dev": "bash patch-paywall.sh && tsx watch server.ts",
+    "start": "bash patch-paywall.sh && tsx server.ts",
+    "postinstall": "bash patch-paywall.sh"
   },
   "dependencies": {
     "@x402/core": "file:/Users/fox/gt/.cache/x402-tarballs/x402-core-2.9.0.tgz",

@@ -49,6 +49,10 @@ app.use(
   ),
 );
 
+app.get("/", (_req, res) => {
+  res.redirect("/joke");
+});
+
 app.get("/joke", async (_req, res) => {
   const jokes = JSON.parse(await readFile(JOKES_PATH, "utf-8"));
   res.json(jokes[Math.floor(Math.random() * jokes.length)]);

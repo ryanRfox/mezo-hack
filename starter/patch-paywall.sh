@@ -51,13 +51,23 @@ if (count === 0) {
   process.exit(1);
 }
 
-// Fix 2: Convert classic <script> tags to <script type="module"> inside the
-// template string. MetaMask SES lockdown intercepts classic script parsing
-// and chokes on ?? (nullish coalescing). Module scripts bypass SES.
+// Fix 2: Convert classic <script> to <script type="module"> ONLY inside the
+// HTML template string (line 30). Do NOT touch line 74 (config script injection)
+// or other non-template code. MetaMask SES lockdown intercepts classic script
+// parsing and chokes on ?? (nullish coalescing). Module scripts bypass SES.
 const scriptTag = "<" + "script>";
-const moduleTag = "<" + `script type="module">`;
-const scriptFix = src.split(scriptTag).length - 1;
-src = src.split(scriptTag).join(moduleTag);
+const moduleTag = "<" + "script type=" + String.fromCharCode(34) + "module" + String.fromCharCode(34) + ">";
+const lines = src.split("\n");
+let scriptFix = 0;
+for (let i = 0; i < lines.length; i++) {
+  if (lines[i].includes("<!DOCTYPE html>")) {
+    const before = lines[i].split(scriptTag).length - 1;
+    lines[i] = lines[i].split(scriptTag).join(moduleTag);
+    scriptFix += before;
+    break; // only patch the template line
+  }
+}
+src = lines.join("\n");
 
 fs.writeFileSync(f, src);
 console.log("patch-paywall: patched " + count + " chain lookup(s), " + scriptFix + " script tag(s) → module");

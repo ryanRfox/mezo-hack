@@ -95,6 +95,10 @@ h1{font-size:1rem;color:#666;font-weight:500;letter-spacing:.05em;text-transform
 </div>
 
 <script>
+// BigInt JSON serialization — viem and x402 use BigInt for token amounts,
+// but native JSON.stringify throws on BigInt. This shim is required.
+if (typeof BigInt !== "undefined") { BigInt.prototype.toJSON = function() { return this.toString(); }; }
+
 // Minimal glue code — no ??, no optional chaining, SES-safe.
 // All heavy crypto loaded from esm.sh via dynamic import().
 var account = null;

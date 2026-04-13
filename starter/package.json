@@ -4,8 +4,8 @@
   "description": "Minimal x402 paywalled API on Mezo Testnet (mUSD).",
   "type": "module",
   "scripts": {
-    "demo:free": "tsx watch 1-server.ts",
-    "demo:paid": "tsx watch 2-server.ts"
+    "dev": "tsx watch 1-server.ts",
+    "x402": "tsx watch 2-server.ts"
   },
   "dependencies": {
     "@x402/core": "file:/Users/fox/gt/.cache/x402-tarballs/x402-core-2.9.0.tgz",

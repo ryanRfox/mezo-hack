@@ -50,7 +50,11 @@ app.use(
 );
 
 app.get("/", (_req, res) => {
-  res.redirect("/joke");
+  res.send(`<!DOCTYPE html><html><head><title>Mezo x402 Starter</title>
+<style>body{font-family:system-ui,sans-serif;max-width:480px;margin:4rem auto;text-align:center}
+h1{font-size:1.5rem}p{color:#555;margin:1rem 0}a{color:#2563eb;font-size:1.2rem}</style></head>
+<body><h1>Mezo x402 Starter</h1><p>This server has one paywalled endpoint.</p>
+<p><a href="/joke">GET /joke</a> — costs 0.001 mUSD on Mezo Testnet</p></body></html>`);
 });
 
 app.get("/joke", async (_req, res) => {

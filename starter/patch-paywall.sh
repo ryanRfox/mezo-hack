@@ -17,24 +17,24 @@ grep -q "Mezo Testnet" "$PAYWALL_EVM" && { echo "patch-paywall: already patched"
 
 echo "patch-paywall: injecting Mezo chain definitions..."
 
+# Use JS object literals (unquoted keys) to match the bundle's minified style.
+# JSON.stringify produces "quoted" keys which can conflict with the template
+# string context in some browser environments (MetaMask SES lockdown).
 node -e '
 const fs = require("fs");
 const f = process.argv[1];
 
-const MEZO_CHAINS = [
-  {id:31611,name:"Mezo Testnet",nativeCurrency:{decimals:18,name:"Bitcoin",symbol:"BTC"},rpcUrls:{default:{http:["https://rpc.test.mezo.org"]}},blockExplorers:{default:{name:"Mezo Testnet Explorer",url:"https://explorer.test.mezo.org"}},testnet:true},
-  {id:31612,name:"Mezo",nativeCurrency:{decimals:18,name:"Bitcoin",symbol:"BTC"},rpcUrls:{default:{http:["https://rpc.mezo.org"]}},blockExplorers:{default:{name:"Mezo Explorer",url:"https://explorer.mezo.org"}}}
-];
-const mezoStr = JSON.stringify(MEZO_CHAINS);
+// Mezo chains as JS object literal (NOT JSON — unquoted keys match bundle style)
+const MEZO = "[{id:31611,name:\"Mezo Testnet\",nativeCurrency:{decimals:18,name:\"Bitcoin\",symbol:\"BTC\"},rpcUrls:{default:{http:[\"https://rpc.test.mezo.org\"]}},blockExplorers:{default:{name:\"Mezo Testnet Explorer\",url:\"https://explorer.test.mezo.org\"}},testnet:true},{id:31612,name:\"Mezo\",nativeCurrency:{decimals:18,name:\"Bitcoin\",symbol:\"BTC\"},rpcUrls:{default:{http:[\"https://rpc.mezo.org\"]}},blockExplorers:{default:{name:\"Mezo Explorer\",url:\"https://explorer.mezo.org\"}}}]";
 
 let src = fs.readFileSync(f, "utf8");
 
-// Match ALL variants: Object.values(cx).find(X=>X.id===V) with any single-letter vars
+// Match ALL variants: Object.values(cx).find(X=>X.id===V)
 const pattern = /Object\.values\(cx\)\.find\(([a-z])=>\1\.id===([a-zA-Z])\)/g;
 let count = 0;
 src = src.replace(pattern, (match, arg, id) => {
   count++;
-  return match + "||" + mezoStr + ".find(" + arg + "=>" + arg + ".id===" + id + ")";
+  return match + "||" + MEZO + ".find(" + arg + "=>" + arg + ".id===" + id + ")";
 });
 
 if (count === 0) {

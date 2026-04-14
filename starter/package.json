@@ -8,10 +8,10 @@
     "x402": "tsx watch 2-server.ts"
   },
   "dependencies": {
-    "@x402/core": "^2.10.0",
-    "@x402/evm": "^2.10.0",
-    "@x402/express": "^2.10.0",
-    "@x402/paywall": "^2.10.0",
+    "@x402/core": "file:~/gt/.cache/x402-tarballs/x402-core-2.9.0.tgz",
+    "@x402/evm": "file:~/gt/.cache/x402-tarballs/x402-evm-2.9.0.tgz",
+    "@x402/express": "file:~/gt/.cache/x402-tarballs/x402-express-2.9.0.tgz",
+    "@x402/paywall": "file:~/gt/.cache/x402-tarballs/x402-paywall-2.9.0.tgz",
     "dotenv": "^16.6.1",
     "express": "^4.21.2"
   },

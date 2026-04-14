@@ -6,7 +6,7 @@
  *
  * setup: cp .env.example .env → fill in PAYEE_ADDRESS with your Mezo testnet address
  * 
- * Run:  pnpm demo:paid
+ * Run:  pnpm x402
  * Test: curl -i http://localhost:3000/free    → 200 (free)
  *       curl -i http://localhost:3000/paid    → 402 (payment required)
  */

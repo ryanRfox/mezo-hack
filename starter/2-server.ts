@@ -4,23 +4,20 @@
  * /free  — still free, unchanged from step 1
  * /paid  — same jokes, but costs $0.001 mUSD on Mezo Testnet
  *
+ * setup: cp .env.example .env → fill in PAYEE_ADDRESS with your Mezo testnet address
+ * 
  * Run:  pnpm demo:paid
- * Test: curl http://localhost:3000/free    → 200 (free)
- *       curl http://localhost:3000/paid    → 402 (payment required)
+ * Test: curl -i http://localhost:3000/free    → 200 (free)
+ *       curl -i http://localhost:3000/paid    → 402 (payment required)
  */
 import express from "express";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-
-// x402 imports — this is everything you add to turn a free endpoint into a paid one
-import { paymentMiddleware, x402ResourceServer } from "@x402/express";
-import { ExactEvmScheme } from "@x402/evm/exact/server";
-import { HTTPFacilitatorClient } from "@x402/core/server";
-import { createPaywall } from "@x402/paywall";
-import { evmPaywall } from "@x402/paywall/evm";
 import { config } from "dotenv";
-
 config();
+
+const PORT = 3000;
+const JOKES_PATH = join(import.meta.dirname, "jokes.json");
 
 const PAYEE_ADDRESS = process.env.PAYEE_ADDRESS as `0x${string}`;
 if (!PAYEE_ADDRESS) {
@@ -28,9 +25,14 @@ if (!PAYEE_ADDRESS) {
   process.exit(1);
 }
 
-const PORT = 3000;
-const FACILITATOR_URL = process.env.FACILITATOR_URL ?? "https://facilitator.vativ.io";
-const JOKES_PATH = join(import.meta.dirname, "jokes.json");
+const FACILITATOR_URL = process.env.FACILITATOR_URL ?? "https://facilitator.test.mezo.org";
+
+// x402 imports — this is everything you add to turn a free endpoint into a paid one
+import { paymentMiddleware, x402ResourceServer } from "@x402/express";
+import { ExactEvmScheme } from "@x402/evm/exact/server";
+import { HTTPFacilitatorClient } from "@x402/core/server";
+import { createPaywall } from "@x402/paywall";
+import { evmPaywall } from "@x402/paywall/evm";
 
 // Set up x402 — facilitator, scheme, and browser paywall
 const facilitatorClient = new HTTPFacilitatorClient({ url: FACILITATOR_URL });
@@ -58,7 +60,7 @@ app.use(
       },
     },
     new x402ResourceServer(facilitatorClient).register("eip155:*", scheme),
-    undefined,
+    {},
     paywall,
   ),
 );
@@ -75,8 +77,7 @@ code{background:#f3f4f6;padding:.2rem .4rem;border-radius:4px;font-size:.9rem}
 <p class="free"><a href="/free">GET /free</a> — free, no payment</p>
 <p class="paid"><a href="/paid">GET /paid</a> — $0.001 mUSD on Mezo Testnet</p>
 <p style="margin-top:2rem;font-size:.85rem;color:#999">
-Try: <code>curl http://localhost:${PORT}/free</code><br>
-Then: <code>curl -i http://localhost:${PORT}/paid</code></p>
+Try: <code>curl -i http://localhost:${PORT}/paid</code></p>
 </body></html>`);
 });
 

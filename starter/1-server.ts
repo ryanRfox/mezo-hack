@@ -2,7 +2,7 @@
  * Step 1: A free joke API — no paywall, no x402.
  *
  * Run:  pnpm demo:free
- * Test: curl http://localhost:3000/free
+ * Test: curl -i http://localhost:3000/free
  */
 import express from "express";
 import { readFile } from "node:fs/promises";
@@ -22,7 +22,7 @@ code{background:#f3f4f6;padding:.2rem .4rem;border-radius:4px;font-size:.9rem}</
 <p>One endpoint. Totally free.</p>
 <p><a href="/free">GET /free</a> — returns a random Bitcoin joke</p>
 <p style="margin-top:2rem;font-size:.85rem;color:#999">
-Try: <code>curl http://localhost:${PORT}/free</code></p>
+Try: <code>curl -i http://localhost:${PORT}/free</code></p>
 </body></html>`);
 });
 
